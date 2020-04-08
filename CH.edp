@@ -1,0 +1,47 @@
+// Cahn-Hilliard Equation of the form $\phi_t = \Delta f - \epsilon \Delta^2 \phi$
+
+// PARAMETERS
+verbosity = 0;
+real D = 0.0001; // Diffusion Coefficient
+real epsi = 0.01; //
+func real f (real var){return (var^3 - var)/epsi^2;} // Potential Function
+func real fprime (real var){return (3*var^2 - 1/epsi^2);} // Potential Function Derivative
+func phi0 = x + y - 1; // Initial Condition
+real dt = 0.005; // Time-Step
+real T = 50.0; // Final Time
+
+// MESH
+mesh Th = square(50, 50, [0 + 1*x, 0 + 1*y]);
+
+// FESPACE
+fespace Vh(Th, P1);
+Vh phiOld = phi0;
+Vh phi, u;
+Vh psi, v;
+
+// MACRO
+macro grad(u) [dx(u), dy(u)] //
+
+// PROBLEM
+problem CH([psi, phi], [v, u])
+   = int2d(Th)(dt * D * grad(psi)' * grad(v) + phi * v
+	       +
+	       grad(phi)' * grad(u) - psi * u - 0.5 * fprime(phiOld) * phi * u)
+   - int2d(Th)
+              (phiOld * v
+	       +
+	       0.5 * fprime(phiOld) * u - f(phiOld) * u);
+
+// TIME-STEPPING ALGORITHM
+for(real t = 0; t < T; t += dt)
+{
+  CH;
+  phiOld = phi;
+  plot(phi, cmm="t="+t+"[sec]", wait=0, fill=1, value=1, nbiso=20);
+}
+
+
+// PLOT
+
+
+// Output
